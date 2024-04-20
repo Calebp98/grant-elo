@@ -17,13 +17,14 @@ def get_data():
 def update_data(df):
     conn.table("test").upsert(df.to_dict(orient="records")).execute()
 
-st.title("ELO Everygrant")
-st.subheader("Which grant is better?")
+st.title("Elo Everygrant")
 
 if "df" not in st.session_state:
     st.session_state.df = get_data()
 
 df = st.session_state.df
+
+show_elo = st.checkbox("Show Current ELO", value=False)
 
 # Add checkboxes for each fund
 funds = df["fund"].unique()
@@ -35,6 +36,7 @@ for i, fund in enumerate(funds):
         selected = st.checkbox(fund, value=True)
         if selected:
             selected_funds.append(fund)
+st.subheader("Which grant is better?")
 
 # Filter the DataFrame based on selected funds
 filtered_df = df[df["fund"].isin(selected_funds)]
@@ -77,30 +79,33 @@ grant_b = st.session_state.random_rows.iloc[1]
 
 with left_half:
     a = st.container(border=True)
+    a.subheader("A")
     a.write(grant_a.fund)
     a.write(grant_a.description)
     a.write(f"${grant_a.amount:,}")
-    st.write(f"ELO: {grant_a['elo']:.0f}")
+    if show_elo: 
+        a.write(f"ELO: {grant_a['elo']:.0f}")
 
 
 
 with right_half:
     b = st.container(border=True)
+    b.subheader("B")
     b.write(grant_b.fund)
     b.write(grant_b.description)
     b.write(f"${grant_b.amount:,}")
-    
-    st.write(f"ELO: {grant_b['elo']:.0f}")
+    if show_elo: 
+        b.write(f"ELO: {grant_b['elo']:.0f}")
 
 with col1:
     st.button("A", on_click=update_elo, args=("A",),use_container_width=True)
 
 with col2:
     st.button("Draw", on_click=update_elo, args=("Draw",),use_container_width=True)
-    st.button("Skip", on_click=skip,use_container_width=True, type="primary")
+    st.button("Skip (No ELO Change)", on_click=skip,use_container_width=True, type="primary")
 
 with col3:
-    st.button("B", on_click=update_elo, args=("B",),use_container_width=True)
+    st.button(f"B", on_click=update_elo, args=("B",),use_container_width=True)
 
 with st.expander("Leaderboard"):
     st.table(
