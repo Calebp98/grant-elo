@@ -70,29 +70,37 @@ def update_elo(winner):
 def skip():
     st.session_state.random_rows = filtered_df.sample(n=2)
 
+left_half, right_half = st.columns(2)
 col1, col2, col3 = st.columns(3)
 grant_a = st.session_state.random_rows.iloc[0]
 grant_b = st.session_state.random_rows.iloc[1]
 
-with col1:
+with left_half:
     a = st.container(border=True)
     a.write(grant_a.fund)
     a.write(grant_a.description)
     a.write(f"${grant_a.amount:,}")
-    st.button("A", on_click=update_elo, args=("A",))
     st.write(f"ELO: {grant_a['elo']:.0f}")
 
-with col2:
-    st.button("Draw", on_click=update_elo, args=("Draw",))
-    st.button("Skip", on_click=skip)
 
-with col3:
+
+with right_half:
     b = st.container(border=True)
     b.write(grant_b.fund)
     b.write(grant_b.description)
     b.write(f"${grant_b.amount:,}")
-    st.button("B", on_click=update_elo, args=("B",))
+    
     st.write(f"ELO: {grant_b['elo']:.0f}")
+
+with col1:
+    st.button("A", on_click=update_elo, args=("A",),use_container_width=True)
+
+with col2:
+    st.button("Draw", on_click=update_elo, args=("Draw",),use_container_width=True)
+    st.button("Skip", on_click=skip,use_container_width=True, type="primary")
+
+with col3:
+    st.button("B", on_click=update_elo, args=("B",),use_container_width=True)
 
 with st.expander("Leaderboard"):
     st.table(
