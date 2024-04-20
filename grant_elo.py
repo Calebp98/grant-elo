@@ -39,7 +39,6 @@ for i, fund in enumerate(funds):
 # Filter the DataFrame based on selected funds
 filtered_df = df[df["fund"].isin(selected_funds)]
 
-st.dataframe(filtered_df.head())
 
 if "random_rows" not in st.session_state:
     st.session_state.random_rows = filtered_df.sample(n=2)
@@ -113,6 +112,17 @@ def plot_elo_distribution():
 
 st.header("ELO Distribution")
 plot_elo_distribution()
+
+def plot_count_distribution():
+    fig, ax = plt.subplots(figsize=(8, 4))
+    filtered_df["count"].hist(bins=20, ax=ax)
+    ax.set_xlabel("Number of Ratings")
+    ax.set_ylabel("Frequency")
+    ax.set_title("Rating Frequency Distribution")
+    st.pyplot(fig)
+
+st.header("Number of Ratings")
+plot_count_distribution()
 
 total_ratings = filtered_df["count"].sum()
 st.subheader(f"Total Ratings: {total_ratings}")
