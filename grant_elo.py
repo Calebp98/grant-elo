@@ -91,7 +91,7 @@ with col3:
     b = st.container(border=True)
     b.write(grant_b.fund)
     b.write(grant_b.description)
-    a.write(f"${grant_b.amount:,}")
+    b.write(f"${grant_b.amount:,}")
     st.button("B", on_click=update_elo, args=("B",))
     st.write(f"ELO: {grant_b['elo']:.0f}")
 
