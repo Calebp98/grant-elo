@@ -4,6 +4,7 @@ import pandas as pd
 from st_supabase_connection import SupabaseConnection
 import matplotlib.pyplot as plt
 import seaborn as sns
+import numpy as np
 
 
 # Initialize connection.
@@ -46,11 +47,22 @@ for i, fund in enumerate(funds):
         selected = st.checkbox(fund, value=True)
         if selected:
             selected_funds.append(fund)
+
+# Add the three-stage slider for inter-fund comparisons
+inter_fund_comparison = st.select_slider(
+    "Inter-fund Comparisons",
+    options=[
+        "No inter-fund comparisons",
+        "Allow inter-fund comparisons",
+        "Only inter-fund comparisons 🌶",
+    ],
+    value="Allow inter-fund comparisons",
+)
+
 st.subheader("Which grant is better?")
 
 # Filter the DataFrame based on selected funds
 filtered_df = original_df[original_df["fund"].isin(selected_funds)]
-
 
 if "random_rows" not in st.session_state:
     st.session_state.random_rows = filtered_df.sample(n=2)
@@ -77,7 +89,7 @@ def update_elo(winner):
             st.session_state.df.at[A_index, "elo"] += 32 * (0.5 - E_A)
         st.session_state.df.at[A_index, "count"] += 1
         st.session_state.df.at[B_index, "count"] += 1
-        st.session_state.random_rows = filtered_df.sample(n=2)
+        select_random_rows()
         update_data(st.session_state.df)
     except Exception as err:
         import pickle
@@ -86,17 +98,48 @@ def update_elo(winner):
             pickle.dump(dict(A_index=A_index, filtered_df=filtered_df, err=err), f)
 
 
-def sample_nearby(df):
-    p1 = df.loc[df["count"].idxmin()]
-    df_exclude_p1 = df[df.index != p1.name].copy()  # Create a copy of the slice
-    df_exclude_p1.loc[:, "weights"] = 1 / (abs(p1.elo - df_exclude_p1["elo"] + 1e-6))
-    st.dataframe(df_exclude_p1)
-    sampled_row = df_exclude_p1.sample(n=1, weights="weights")
-    return pd.concat([p1.to_frame().T, sampled_row], axis=0)
+def sample_nearby(df, grant_a):
+    df_exclude_grant_a = df[df.index != grant_a.name].copy()
+    df_exclude_grant_a.loc[:, "weights"] = 1 / (
+        abs(grant_a.elo - df_exclude_grant_a["elo"]) + 1e-6
+    )
+    sampled_row = df_exclude_grant_a.sample(n=1, weights="weights")
+    return sampled_row
+
+
+def select_random_rows():
+    if inter_fund_comparison == "No inter-fund comparisons":
+        fund = filtered_df["fund"].sample(n=1).iloc[0]
+        fund_df = filtered_df[filtered_df["fund"] == fund]
+        grant_a = fund_df.sample(n=1).iloc[0]
+        grant_b = sample_nearby(fund_df, grant_a).iloc[0]
+        st.session_state.random_rows = pd.concat(
+            [grant_a.to_frame().T, grant_b.to_frame().T], ignore_index=True
+        )
+    elif inter_fund_comparison == "Only inter-fund comparisons":
+        funds = filtered_df["fund"].unique()
+        if len(funds) < 2:
+            st.warning("Not enough funds selected for inter-fund comparisons.")
+            st.session_state.random_rows = filtered_df.sample(n=2)
+        else:
+            fund_a, fund_b = np.random.choice(funds, size=2, replace=False)
+            grant_a = filtered_df[filtered_df["fund"] == fund_a].sample(n=1).iloc[0]
+            grant_b = sample_nearby(
+                filtered_df[filtered_df["fund"] == fund_b], grant_a
+            ).iloc[0]
+            st.session_state.random_rows = pd.concat(
+                [grant_a.to_frame().T, grant_b.to_frame().T], ignore_index=True
+            )
+    else:
+        grant_a = filtered_df.sample(n=1).iloc[0]
+        grant_b = sample_nearby(filtered_df, grant_a).iloc[0]
+        st.session_state.random_rows = pd.concat(
+            [grant_a.to_frame().T, grant_b.to_frame().T], ignore_index=True
+        )
 
 
 def skip():
-    st.session_state.random_rows = filtered_df.sample(n=2)
+    select_random_rows()
 
 
 left_half, right_half = st.columns(2)
@@ -105,7 +148,7 @@ grant_a = st.session_state.random_rows.iloc[0]
 grant_b = st.session_state.random_rows.iloc[1]
 
 
-def dispay_grant(grant, label):
+def display_grant(grant, label):
     a = st.container(border=True)
     a.subheader(label)
     a.write(grant.fund)
@@ -121,11 +164,11 @@ def dispay_grant(grant, label):
 
 
 with left_half:
-    dispay_grant(grant_a, "A")
+    display_grant(grant_a, "A")
 
 
 with right_half:
-    dispay_grant(grant_b, "B")
+    display_grant(grant_b, "B")
 
 
 st.button("Draw", on_click=update_elo, args=("Draw",), use_container_width=True)
