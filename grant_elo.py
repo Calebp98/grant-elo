@@ -9,8 +9,9 @@ import seaborn as sns
 # Initialize connection.
 conn = st.connection("supabase", type=SupabaseConnection)
 
-table = "test"
-# table = "grants_elo"
+# table = "test"
+table = "grants_elo"
+
 
 def get_data():
     result = conn.query("*", table=table, ttl="0").execute()
@@ -114,7 +115,9 @@ def dispay_grant(grant, label):
     a.write(f"${grant.amount:,}")
     if show_elo:
         a.write(f"ELO: {grant['elo']:.0f}")
-    a.button(label, on_click=update_elo, args=(label,), use_container_width=True, key = label)
+    a.button(
+        label, on_click=update_elo, args=(label,), use_container_width=True, key=label
+    )
 
 
 with left_half:
@@ -125,12 +128,10 @@ with right_half:
     dispay_grant(grant_b, "B")
 
 
-
 st.button("Draw", on_click=update_elo, args=("Draw",), use_container_width=True)
 st.button(
     "Skip (No ELO Change)", on_click=skip, use_container_width=True, type="primary"
 )
-
 
 
 with st.expander("Leaderboard"):
