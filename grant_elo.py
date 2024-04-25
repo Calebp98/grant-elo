@@ -13,6 +13,7 @@ conn = st.connection("supabase", type=SupabaseConnection)
 # table = "test"
 table = "grants_elo"
 
+st.subheader("Please give feedback anonymously [here](https://www.admonymous.co/caleb_parikh) (quickest option), via slack/email, or by opening a [github issue](https://github.com/Calebp98/grant-elo/issues).")
 
 def get_data():
     result = conn.query("*", table=table, ttl="0").execute()
