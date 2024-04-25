@@ -59,7 +59,7 @@ inter_fund_comparison = st.select_slider(
     value="Allow inter-fund comparisons",
 )
 
-st.subheader("Which grant is better?")
+st.subheader("Which grant is more [cost-effective](https://en.wikipedia.org/wiki/Cost-effectiveness_analysis)?")
 
 # Filter the DataFrame based on selected funds
 filtered_df = original_df[original_df["fund"].isin(selected_funds)]
